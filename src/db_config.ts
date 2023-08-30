@@ -13,7 +13,7 @@ const AppDataSource = new DataSource({
   entities: [Link],
   synchronize: true,
   logging: true,
-  extra: { ssl: true },
+  ssl: true,
   // type: "postgres",
   // host: "localhost",
   // port: 5435,
