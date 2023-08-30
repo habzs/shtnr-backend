@@ -4,7 +4,6 @@ require("dotenv").config();
 
 const AppDataSource = new DataSource({
   type: "postgres",
-  url: process.env.DATABASE_URL,
   host: process.env.DATABASE_HOST,
   port: +process.env.DATABASE_PORT,
   username: process.env.DATABASE_USER,
@@ -14,6 +13,7 @@ const AppDataSource = new DataSource({
   synchronize: true,
   logging: true,
   ssl: true,
+  // url: process.env.DATABASE_URL,
 
   // type: "postgres",
   // host: "localhost",
