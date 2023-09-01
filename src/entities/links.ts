@@ -16,7 +16,7 @@ export class Link {
   @Column()
   shtnd_url: string;
 
-  @Column()
+  @Column({ default: 0 })
   times_visited: number;
 
   @CreateDateColumn({ type: "timestamptz" })
