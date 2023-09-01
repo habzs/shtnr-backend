@@ -1,5 +1,5 @@
 import { DefaultContext, DefaultState, ParameterizedContext } from "koa";
-import AppDataSource from "./db_config";
+import AppDataSource from "../config/db_config";
 import HealthcheckRoute from "./routes/healthcheck";
 import UrlRouter from "./routes/urls";
 import cors from "koa2-cors";

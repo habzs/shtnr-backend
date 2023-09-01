@@ -1,4 +1,9 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+} from "typeorm";
 
 @Entity()
 export class Link {
@@ -10,4 +15,10 @@ export class Link {
 
   @Column()
   shtnd_url: string;
+
+  @Column()
+  times_visited: number;
+
+  @CreateDateColumn({ type: "timestamptz" })
+  public created_at: Date;
 }

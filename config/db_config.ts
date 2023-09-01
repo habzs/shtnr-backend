@@ -1,5 +1,5 @@
 import { DataSource } from "typeorm";
-import { Link } from "./entities/links";
+import { Link } from "../src/entities/links";
 require("dotenv").config();
 
 const AppDataSource = new DataSource({
@@ -9,10 +9,12 @@ const AppDataSource = new DataSource({
   username: process.env.DATABASE_USER,
   password: process.env.DATABASE_PASSWORD,
   database: process.env.DATABASE_NAME,
-  entities: [Link],
-  synchronize: true,
+  entities: ["./src/entities/*.ts"],
+  migrations: ["./migration/*"],
+  synchronize: false,
   logging: true,
-  ssl: true,
+  ssl: process.env.DATABASE_SSL === "true",
+
   // url: process.env.DATABASE_URL,
 
   // type: "postgres",
