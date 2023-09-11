@@ -13,7 +13,7 @@ const AppDataSource = new DataSource({
   migrations: ["./migration/*"],
   synchronize: false,
   logging: true,
-  ssl: true,
+  ssl: false,
 
   // url: process.env.DATABASE_URL,
 

@@ -17,11 +17,12 @@ import { CreateUrlDto } from "../requests/create-url.request";
 // import the nanoid function that generates random strings
 import { nanoid } from "nanoid";
 import validator from "validator";
+import { errors } from "../errors/error_msgs";
 
 // define a default class LinkController that contains static methods for handling requests
-export default class LinkController {
+class LinkController {
   // define a static method that takes a context object as a parameter and returns a promise of void
-  public static async getFullUrl(ctx: Context): Promise<void> {
+  public async getFullUrl(ctx: Context): Promise<void> {
     // get the repository object for the Link entity from the AppDataSource class
     const urlRepository: Repository<Link> = AppDataSource.getRepository(Link);
     // cast the request body to the GetFullRequestDto type and assign it to a variable data
@@ -58,12 +59,12 @@ export default class LinkController {
       // otherwise, set the status code to 400 and send back an error message as the response body
     } else {
       ctx.status = 400;
-      ctx.body = { error: "Url not found" };
+      ctx.body = { error: errors.NO_FULL_URL };
     }
   }
 
   // define a static method that takes a parameterized context object as a parameter and returns a promise of void
-  public static async redirectUrl(
+  public async redirectUrl(
     ctx: ParameterizedContext<DefaultState, DefaultContext>
   ) {
     // get the repository object for the Link entity from the AppDataSource class
@@ -86,7 +87,7 @@ export default class LinkController {
   }
 
   // define a static method that takes a context object as a parameter and returns a promise of void
-  public static async testEp(ctx: Context): Promise<void> {
+  public async testEp(ctx: Context): Promise<void> {
     // log a message to the console for debugging purposes
     console.log("Wake up!");
     // set the response body to an object with status and data properties
@@ -94,7 +95,7 @@ export default class LinkController {
   }
 
   // define a static method that takes a context object as a parameter and returns a promise of void
-  public static async createShortUrl(ctx: Context): Promise<void> {
+  public async createShortUrl(ctx: Context): Promise<void> {
     // get the repository object for the Link entity from the AppDataSource class
     const urlRepository: Repository<Link> = AppDataSource.getRepository(Link);
     // cast the request body to the CreateUrlDto type and assign it to a variable data
@@ -170,3 +171,4 @@ export default class LinkController {
     }
   }
 }
+export default new LinkController();
