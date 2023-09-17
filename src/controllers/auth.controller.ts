@@ -5,6 +5,7 @@ import { ValidationError, validate } from "class-validator";
 import { CreateUserRequestDTO } from "../requests/create-user.request";
 import { Repository } from "typeorm";
 import { LoginUserRequestDTO } from "../requests/login-user.request";
+import { getUserIdFromJwt } from "../utilities/apiToken";
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
@@ -54,12 +55,16 @@ class AuthController {
           try {
             await transactionEntityManager.save(userTx);
             const token = createToken(userTx.id);
-            ctx.cookies.set("jwt", token, {
+            ctx.cookies.set("auth", token, {
               httpOnly: true,
               maxAge: maxAge * 1000,
             });
 
-            ctx.body = { status: "account created" };
+            ctx.body = {
+              status: "account created",
+              username: userTx.username,
+              email: userTx.email,
+            };
           } catch (error) {
             // TODO: abstract into it's own function
 
@@ -96,12 +101,12 @@ class AuthController {
 
       if (auth) {
         const token = createToken(user.id);
-        ctx.cookies.set("jwt", token, {
+        ctx.cookies.set("auth", token, {
           httpOnly: true,
           maxAge: maxAge * 1000,
         });
         ctx.status = 200;
-        ctx.body = { status: "logged in", user: user };
+        ctx.body = { msg: "logged in", user: user };
         return;
       }
     }
@@ -109,15 +114,13 @@ class AuthController {
     ctx.body = { errorsMsg: "Invalid email or password" };
   }
 
-  public async logout(ctx: Context): Promise<void> {}
-  public async setcookies(ctx: Context): Promise<void> {
-    ctx.cookies.set("isEmployee", "true", {
-      maxAge: 1000 * 60 * 60 * 24,
-      httpOnly: true,
+  public async logout(ctx: Context): Promise<void> {
+    ctx.cookies.set("auth", "", {
+      maxAge: 1,
+      httpOnly: false,
+      overwrite: true,
     });
-
-    console.log(ctx.cookies.get("isEmployee"));
-    ctx.body = "You got a cookieeee";
+    ctx.body = { msg: "logged out" };
   }
 }
 

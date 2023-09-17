@@ -18,6 +18,8 @@ import { CreateUrlDto } from "../requests/create-url.request";
 import { nanoid } from "nanoid";
 import validator from "validator";
 import { errors } from "../errors/error_msgs";
+import { CreateCustomDTO } from "../requests/create-custom-url.request";
+import { getUserIdFromJwt } from "../utilities/apiToken";
 
 // define a default class LinkController that contains static methods for handling requests
 class LinkController {
@@ -169,6 +171,84 @@ class LinkController {
       }
       return;
     }
+  }
+
+  public async createCustomUrl(ctx: Context): Promise<void> {
+    // get the repository object for the Link entity from the AppDataSource class
+    const urlRepository: Repository<Link> = AppDataSource.getRepository(Link);
+    // cast the request body to the CreateUrlDto type and assign it to a variable data
+    const data = <CreateCustomDTO>ctx.request.body;
+    const userId = await getUserIdFromJwt(ctx);
+
+    // if data.url is empty
+    if (!data.url) {
+      // set the status code to 400 and send back an error message as the response body
+      ctx.status = 400;
+      ctx.body = { error: "Url is required", err_code: "E1000" };
+      return;
+    }
+
+    if (!data.customUrl) {
+      ctx.status = 400;
+      ctx.body = { error: "Custom url is required", err_code: "E1001" };
+      return;
+    }
+
+    if (!validator.isURL(data.url)) {
+      ctx.status = 400;
+      ctx.body = { error: "Invalid url", err_code: "E1002" };
+      return;
+    }
+
+    if (!data.url.startsWith("http://") && !data.url.startsWith("https://")) {
+      data.url = "https://" + data.url;
+    }
+
+    if (data.url.startsWith("http://")) {
+      data.url = "https://" + data.url.slice(7);
+    }
+
+    const customUrlUsed = await urlRepository.findOne({
+      where: { shtnd_url: data.customUrl },
+    });
+
+    if (customUrlUsed) {
+      ctx.status = 400;
+      ctx.body = { error: "Custom url already exists", err_code: "E1003" };
+      return;
+    }
+
+    const urlExistsInDb = await urlRepository.findOne({
+      where: { shtnd_url: data.customUrl, user_id: userId },
+    });
+
+    if (urlExistsInDb) {
+      ctx.status = 200;
+      ctx.body = {
+        url: urlExistsInDb.url,
+        shtnd_url: urlExistsInDb.shtnd_url,
+        times_visited: urlExistsInDb.times_visited,
+        created_at: urlExistsInDb.created_at,
+      };
+      return;
+    }
+
+    const newUrl = new Link();
+    newUrl.url = data.url;
+    newUrl.shtnd_url = data.customUrl;
+    newUrl.times_visited = 0;
+    newUrl.user_id = userId;
+
+    await urlRepository.save(newUrl);
+
+    ctx.status = 200;
+    ctx.body = {
+      url: newUrl.url,
+      shtnd_url: newUrl.shtnd_url,
+      times_visited: newUrl.times_visited,
+      created_at: newUrl.created_at,
+      user_id: userId,
+    };
   }
 }
 export default new LinkController();

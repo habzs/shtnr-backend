@@ -10,6 +10,9 @@ export class Link {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ default: "public" })
+  user_id: string;
+
   @Column()
   url: string;
 
@@ -21,4 +24,7 @@ export class Link {
 
   @CreateDateColumn({ type: "timestamptz" })
   public created_at: Date;
+
+  @CreateDateColumn({ type: "timestamptz" })
+  public updated_at: Date;
 }
