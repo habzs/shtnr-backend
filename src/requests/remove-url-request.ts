@@ -1,9 +1,7 @@
 import { IsDefined, IsString } from "class-validator";
 
-export class CreateUrlDto {
+export class RemoveURLDTO {
   //   @IsDefined()
   //   @IsString()
-  url: string;
-
-  customUrl: string;
+  shtnd_url: string;
 }

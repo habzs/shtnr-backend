@@ -1,9 +1,11 @@
 import { IsDefined, IsString } from "class-validator";
 
-export class CreateUrlDto {
-  //   @IsDefined()
-  //   @IsString()
+export class CreateCustomDTO {
+  @IsDefined()
+  @IsString()
   url: string;
 
+  @IsDefined()
+  @IsString()
   customUrl: string;
 }

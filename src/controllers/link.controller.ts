@@ -6,64 +6,39 @@ import {
   ParameterizedContext,
 } from "koa";
 import { Repository } from "typeorm";
-// import the custom class AppDataSource that handles the database connection
 import AppDataSource from "../../config/db_config";
-// import the Link entity that represents a table in the database
 import { Link } from "../entities/links";
-// import the GetFullRequestDto class that defines the shape of the request body for getting the full url
 import { GetFullRequestDto } from "../requests/get-full-url.request";
-// import the CreateUrlDto class that defines the shape of the request body for creating a short url
 import { CreateUrlDto } from "../requests/create-url.request";
-// import the nanoid function that generates random strings
 import { nanoid } from "nanoid";
 import validator from "validator";
+import { errors } from "../errors/error_msgs";
+import { CreateCustomDTO } from "../requests/create-custom-url.request";
+import { getUserIdFromJwt } from "../utilities/apiToken";
+import LinkService from "../services/link.service";
+import { RemoveURLDTO } from "../requests/remove-url-request";
 
 // define a default class LinkController that contains static methods for handling requests
-export default class LinkController {
+class LinkController {
+  private linkService = new LinkService();
+
   // define a static method that takes a context object as a parameter and returns a promise of void
-  public static async getFullUrl(ctx: Context): Promise<void> {
-    // get the repository object for the Link entity from the AppDataSource class
-    const urlRepository: Repository<Link> = AppDataSource.getRepository(Link);
+  public async getFullUrl(ctx: Context): Promise<void> {
     // cast the request body to the GetFullRequestDto type and assign it to a variable data
     const data: GetFullRequestDto = <GetFullRequestDto>ctx.request.body;
+    const fullUrl = await this.linkService.getFullUrl(data.shtnd_url);
 
-    // check if the short url is already in the database by using the findOne method of the repository object with a where clause
-    const url = await urlRepository.findOne({
-      where: { shtnd_url: data.shtnd_url },
-    });
-
-    // log some messages to the console for debugging purposes
-    console.log("Request received");
-    console.log(data);
-    console.log("url", url);
-    // if the url is found, set the status code to 200 and send back the url object as the response body
-    if (url) {
-      // // increment the times_visited property of the url object by 1
-      // url.times_visited += 1;
-      // // save the updated url object to the database by using the save method of the repository object
-      // await urlRepository.save(url);
-
-      // another method using transaction managers
-      AppDataSource.manager.transaction(async (transactionEntityManager) => {
-        const urlTransaction = new Link();
-        urlTransaction.id = url.id;
-        urlTransaction.url = url.url;
-        urlTransaction.shtnd_url = url.shtnd_url;
-        urlTransaction.times_visited = url.times_visited + 1;
-        await transactionEntityManager.save(urlTransaction);
-      });
-
-      ctx.status = 200;
-      ctx.body = url;
-      // otherwise, set the status code to 400 and send back an error message as the response body
-    } else {
+    if (!fullUrl) {
       ctx.status = 400;
-      ctx.body = { error: "Url not found" };
+      ctx.body = { error: errors.NO_FULL_URL };
+    } else {
+      ctx.status = 200;
+      ctx.body = fullUrl;
     }
   }
 
   // define a static method that takes a parameterized context object as a parameter and returns a promise of void
-  public static async redirectUrl(
+  public async redirectUrl(
     ctx: ParameterizedContext<DefaultState, DefaultContext>
   ) {
     // get the repository object for the Link entity from the AppDataSource class
@@ -86,7 +61,7 @@ export default class LinkController {
   }
 
   // define a static method that takes a context object as a parameter and returns a promise of void
-  public static async testEp(ctx: Context): Promise<void> {
+  public async testEp(ctx: Context): Promise<void> {
     // log a message to the console for debugging purposes
     console.log("Wake up!");
     // set the response body to an object with status and data properties
@@ -94,12 +69,9 @@ export default class LinkController {
   }
 
   // define a static method that takes a context object as a parameter and returns a promise of void
-  public static async createShortUrl(ctx: Context): Promise<void> {
-    // get the repository object for the Link entity from the AppDataSource class
-    const urlRepository: Repository<Link> = AppDataSource.getRepository(Link);
-    // cast the request body to the CreateUrlDto type and assign it to a variable data
+  public async createShortUrl(ctx: Context): Promise<void> {
     const data = <CreateUrlDto>ctx.request.body;
-
+    const userId = await getUserIdFromJwt(ctx);
     // if data.url is empty
     if (!data.url) {
       // set the status code to 400 and send back an error message as the response body
@@ -114,59 +86,158 @@ export default class LinkController {
       return;
     }
 
-    // clean up url
-    // check if the url starts with http or https
-    if (!data.url.startsWith("http://") && !data.url.startsWith("https://")) {
-      // if not, add https:// to the beginning of the url
-      data.url = "https://" + data.url;
-    }
-
-    // if url starts with http://, remove the http:// part and add https:// to the beginning of the url
-    if (data.url.startsWith("http://")) {
-      data.url = "https://" + data.url.slice(7);
-    }
-
-    // check if the original url is already in the database by using the findOne method of the repository object with a where clause
-    const urlExistsInDb = await urlRepository.findOne({
-      where: { url: data.url },
-    });
-
-    // if the url is found, set the status code to 200 and send back the url object as the response body and return from this function
-    if (urlExistsInDb) {
-      ctx.status = 200;
-      ctx.body = {
-        url: urlExistsInDb.url,
-        shtnd_url: urlExistsInDb.shtnd_url,
-        times_visited: urlExistsInDb.times_visited,
-        created_at: urlExistsInDb.created_at,
-      };
-      return;
-    }
-
-    // use a while loop to generate and check for unique short urls until one is found
-    while (true) {
-      // generate a random string of length 4 using nanoid function and assign it to a variable shtnd_url
-      const shtnd_url = nanoid(4);
-      // check if there is already an existing url with this short url in database by using findOne method of repository object with where clause
-      const url = await urlRepository.findOne({ where: { shtnd_url } });
-      // if no such url is found, create a new Link object and assign its properties with data.url and shtnd_url
-      if (!url) {
-        const newUrl = new Link();
-        newUrl.url = data.url;
-        newUrl.shtnd_url = shtnd_url;
-        newUrl.times_visited = 0;
-        // save this new Link object to database by using save method of repository object
-        await urlRepository.save(newUrl);
-        // set status code to 200 and send back newUrl object as response body and return from this function
-        ctx.status = 200;
-        ctx.body = {
-          url: newUrl.url,
-          shtnd_url: newUrl.shtnd_url,
-          times_visited: newUrl.times_visited,
-          created_at: newUrl.created_at,
-        };
+    try {
+      const shtnd_url = await this.linkService.createShortUrl(
+        data.url,
+        userId,
+        data.customUrl
+      );
+      ctx.body = shtnd_url;
+    } catch (err) {
+      if (err.message === errors.SHORTED_URL_ALREADY_EXISTS) {
+        ctx.status = 400;
+        ctx.body = { err_code: errors.SHORTED_URL_ALREADY_EXISTS };
       }
+    }
+
+    return;
+  }
+
+  // public async createCustomUrl(ctx: Context): Promise<void> {
+  //   // get the repository object for the Link entity from the AppDataSource class
+  //   const urlRepository: Repository<Link> = AppDataSource.getRepository(Link);
+  //   // cast the request body to the CreateUrlDto type and assign it to a variable data
+  //   const data = <CreateCustomDTO>ctx.request.body;
+  //   const userId = await getUserIdFromJwt(ctx);
+
+  //   // if data.url is empty
+  //   if (!data.url) {
+  //     // set the status code to 400 and send back an error message as the response body
+  //     ctx.status = 400;
+  //     ctx.body = { error: "Url is required", err_code: "E1000" };
+  //     return;
+  //   }
+
+  //   if (!data.customUrl) {
+  //     ctx.status = 400;
+  //     ctx.body = { error: "Custom url is required", err_code: "E1001" };
+  //     return;
+  //   }
+
+  //   // url validator
+  //   if (!validator.isURL(data.url)) {
+  //     ctx.status = 400;
+  //     ctx.body = { error: "Invalid url", err_code: "E1002" };
+  //     return;
+  //   }
+
+  //   // converts http:// to https://
+  //   if (!data.url.startsWith("http://") && !data.url.startsWith("https://")) {
+  //     data.url = "https://" + data.url;
+  //   }
+
+  //   if (data.url.startsWith("http://")) {
+  //     data.url = "https://" + data.url.slice(7);
+  //   }
+
+  //   const customUrlUsed = await urlRepository.findOne({
+  //     where: { shtnd_url: data.customUrl },
+  //   });
+
+  //   if (customUrlUsed) {
+  //     ctx.status = 400;
+  //     ctx.body = { error: "Custom url already exists", err_code: "E1003" };
+  //     return;
+  //   }
+
+  //   const urlExistsInDb = await urlRepository.findOne({
+  //     where: { shtnd_url: data.customUrl, user_id: userId },
+  //   });
+
+  //   if (urlExistsInDb) {
+  //     ctx.status = 200;
+  //     ctx.body = {
+  //       url: urlExistsInDb.url,
+  //       shtnd_url: urlExistsInDb.shtnd_url,
+  //       times_visited: urlExistsInDb.times_visited,
+  //       created_at: urlExistsInDb.created_at,
+  //     };
+  //     return;
+  //   }
+
+  //   const newUrl = new Link();
+  //   newUrl.url = data.url;
+  //   newUrl.shtnd_url = data.customUrl;
+  //   newUrl.times_visited = 0;
+  //   newUrl.user_id = userId;
+
+  //   await urlRepository.save(newUrl);
+
+  //   ctx.status = 200;
+  //   ctx.body = {
+  //     url: newUrl.url,
+  //     shtnd_url: newUrl.shtnd_url,
+  //     times_visited: newUrl.times_visited,
+  //     created_at: newUrl.created_at,
+  //     user_id: userId,
+  //   };
+  // }
+
+  public async getCustomUrls(ctx: Context): Promise<void> {
+    const userId = await getUserIdFromJwt(ctx);
+
+    if (!userId) {
+      // set the status code to 400 and send back an error message as the response body
+      ctx.status = 400;
+      ctx.body = { error: "User is not valid" };
       return;
     }
+
+    try {
+      const shtnd_url = await this.linkService.getCustomUrls(userId);
+      ctx.body = shtnd_url;
+    } catch (err) {
+      if (err.message === errors.SHORTED_URL_ALREADY_EXISTS) {
+        ctx.status = 400;
+        ctx.body = { err_code: errors.NO_SHORTED_URL_FOUND };
+      }
+    }
+
+    return;
+  }
+
+  public async removeUrl(ctx: Context): Promise<void> {
+    const userId = await getUserIdFromJwt(ctx);
+    const data = <RemoveURLDTO>ctx.request.body;
+
+    if (!userId) {
+      // set the status code to 400 and send back an error message as the response body
+      ctx.status = 400;
+      ctx.body = { error: "User is not valid" };
+      return;
+    }
+
+    if (!data.shtnd_url) {
+      // set the status code to 400 and send back an error message as the response body
+      ctx.status = 400;
+      ctx.body = { error: "Shortened url is required" };
+      return;
+    }
+
+    try {
+      const shtnd_url = await this.linkService.removeUrl(
+        userId,
+        data.shtnd_url
+      );
+
+      ctx.status = 200;
+      ctx.body = shtnd_url;
+    } catch (err) {
+      ctx.status = 400;
+      ctx.body = { err_code: errors.NO_SHORTED_URL_FOUND };
+    }
+
+    return;
   }
 }
+export default new LinkController();

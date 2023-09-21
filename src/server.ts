@@ -12,53 +12,57 @@ const bodyParser = require("koa-bodyparser");
 
 const app = new Koa();
 const router = new Router();
-const testrouter = new Router();
 
-router.get(
-  "/",
-  async (ctx: ParameterizedContext<DefaultState, DefaultContext>) => {
-    ctx.body = { msg: "Hello World!" };
-  }
-);
+// router.get(
+//   "/",
+//   async (ctx: ParameterizedContext<DefaultState, DefaultContext>) => {
+//     ctx.body = { msg: "Hello World!" };
+//   }
+// );
 
 app.use(bodyParser());
-app.use(cors());
-
-// mock database
-let users = [
-  {
-    name: "John",
-    age: 20,
-    email: "test@asd.com",
-  },
-  {
-    name: "Bob",
-    age: 22,
-    email: "tsss@asd.com",
-  },
-  {
-    name: "Alice",
-    age: 10,
-    email: "dggg@asd.com",
-  },
-];
-
-// post requests
-router.post(
-  "/user/:id",
-  async (ctx: {
-    request: any;
-    body: { name: string; age: number; email: string };
-    params: { id: number };
-  }) => {
-    ctx.body = Object.assign(users[ctx.params.id], ctx.request.body);
-  }
+// app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
 );
 
-app.use(router.routes()).use(router.allowedMethods());
-app.use(HealthcheckRoute.routes()).use(HealthcheckRoute.allowedMethods());
+// mock database
+// let users = [
+//   {
+//     name: "John",
+//     age: 20,
+//     email: "test@asd.com",
+//   },
+//   {
+//     name: "Bob",
+//     age: 22,
+//     email: "tsss@asd.com",
+//   },
+//   {
+//     name: "Alice",
+//     age: 10,
+//     email: "dggg@asd.com",
+//   },
+// ];
+
+// post requests
+// router.post(
+//   "/user/:id",
+//   async (ctx: {
+//     request: any;
+//     body: { name: string; age: number; email: string };
+//     params: { id: number };
+//   }) => {
+//     ctx.body = Object.assign(users[ctx.params.id], ctx.request.body);
+//   }
+// );
+
+// app.use(router.routes()).use(router.allowedMethods());
+// app.use(HealthcheckRoute.routes()).use(HealthcheckRoute.allowedMethods());
 app.use(UrlRouter.routes()).use(UrlRouter.allowedMethods());
-app.use(testrouter.routes()).use(testrouter.allowedMethods());
 
 AppDataSource.initialize()
   .then(() => {
@@ -68,5 +72,6 @@ AppDataSource.initialize()
     });
   })
   .catch((err) => {
+    console.log("Caught error");
     console.log(err);
   });

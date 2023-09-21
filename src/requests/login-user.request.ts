@@ -1,9 +1,8 @@
 import { IsDefined, IsString } from "class-validator";
 
-export class CreateUrlDto {
+export class LoginUserRequestDTO {
   //   @IsDefined()
   //   @IsString()
-  url: string;
-
-  customUrl: string;
+  email: string;
+  password: string;
 }
