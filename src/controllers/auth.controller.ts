@@ -58,6 +58,7 @@ class AuthController {
             ctx.cookies.set("auth", token, {
               httpOnly: true,
               maxAge: maxAge * 1000,
+              secure: true,
               sameSite: "none",
             });
 
@@ -105,6 +106,7 @@ class AuthController {
         ctx.cookies.set("auth", token, {
           httpOnly: true,
           maxAge: maxAge * 1000,
+          secure: true,
           sameSite: "none",
         });
         ctx.status = 200;
@@ -121,6 +123,7 @@ class AuthController {
       maxAge: 1,
       httpOnly: false,
       overwrite: true,
+      secure: true,
       sameSite: "none",
     });
     ctx.body = { msg: "logged out" };
