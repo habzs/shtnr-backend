@@ -22,14 +22,14 @@ const router = new Router();
 
 app.use(bodyParser());
 // app.use(cors());
-app.use(
-  cors({
-    origin: "https://shtnr.owenlee.net",
-    // origin: "https://shtnr.owenlee.net",
-    // origin: "http://localhost:3000",
-    credentials: true,
-  })
-);
+// app.use(
+//   cors({
+//     origin: "https://shtnr.owenlee.net",
+//     // origin: "https://shtnr.owenlee.net",
+//     // origin: "http://localhost:3000",
+//     credentials: true,
+//   })
+// );
 
 // mock database
 // let users = [
