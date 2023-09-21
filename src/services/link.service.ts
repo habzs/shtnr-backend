@@ -3,6 +3,7 @@ import { Link } from "../entities/links";
 import { ILinkDb, LinkDb } from "../db/links/link.db";
 import AppDataSource from "../../config/db_config";
 import {
+  CustomLinkResponse,
   FullLinkResponse,
   ShtndLinkResponse,
 } from "../interfaces/link.interface";
@@ -152,5 +153,42 @@ export default class LinkService {
         }
       }
     }
+  }
+
+  public async getCustomUrls(
+    user_id: string,
+    entityManager?: EntityManager
+  ): Promise<CustomLinkResponse[]> {
+    const urls = await this.linkDb.getCustomUrls(user_id, entityManager);
+
+    const urlTx = urls.map((tx) => {
+      return {
+        url: tx.url,
+        shtnd_url: tx.shtnd_url,
+        times_visited: tx.times_visited,
+        created_at: tx.created_at,
+        user_id: tx.user_id,
+      };
+    });
+
+    return urlTx;
+  }
+
+  public async removeUrl(
+    user_id: string,
+    shtnd_url: string,
+    entityManager?: EntityManager
+  ): Promise<any> {
+    const result = await this.linkDb.removeUrl(
+      user_id,
+      shtnd_url,
+      entityManager
+    );
+    console.log(result);
+    if (result.affected === 0) {
+      throw new Error(errors.NO_SHORTED_URL_FOUND);
+    }
+
+    return { message: "Successfully deleted" };
   }
 }

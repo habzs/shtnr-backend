@@ -16,6 +16,7 @@ import { errors } from "../errors/error_msgs";
 import { CreateCustomDTO } from "../requests/create-custom-url.request";
 import { getUserIdFromJwt } from "../utilities/apiToken";
 import LinkService from "../services/link.service";
+import { RemoveURLDTO } from "../requests/remove-url-request";
 
 // define a default class LinkController that contains static methods for handling requests
 class LinkController {
@@ -102,84 +103,141 @@ class LinkController {
     return;
   }
 
-  public async createCustomUrl(ctx: Context): Promise<void> {
-    // get the repository object for the Link entity from the AppDataSource class
-    const urlRepository: Repository<Link> = AppDataSource.getRepository(Link);
-    // cast the request body to the CreateUrlDto type and assign it to a variable data
-    const data = <CreateCustomDTO>ctx.request.body;
+  // public async createCustomUrl(ctx: Context): Promise<void> {
+  //   // get the repository object for the Link entity from the AppDataSource class
+  //   const urlRepository: Repository<Link> = AppDataSource.getRepository(Link);
+  //   // cast the request body to the CreateUrlDto type and assign it to a variable data
+  //   const data = <CreateCustomDTO>ctx.request.body;
+  //   const userId = await getUserIdFromJwt(ctx);
+
+  //   // if data.url is empty
+  //   if (!data.url) {
+  //     // set the status code to 400 and send back an error message as the response body
+  //     ctx.status = 400;
+  //     ctx.body = { error: "Url is required", err_code: "E1000" };
+  //     return;
+  //   }
+
+  //   if (!data.customUrl) {
+  //     ctx.status = 400;
+  //     ctx.body = { error: "Custom url is required", err_code: "E1001" };
+  //     return;
+  //   }
+
+  //   // url validator
+  //   if (!validator.isURL(data.url)) {
+  //     ctx.status = 400;
+  //     ctx.body = { error: "Invalid url", err_code: "E1002" };
+  //     return;
+  //   }
+
+  //   // converts http:// to https://
+  //   if (!data.url.startsWith("http://") && !data.url.startsWith("https://")) {
+  //     data.url = "https://" + data.url;
+  //   }
+
+  //   if (data.url.startsWith("http://")) {
+  //     data.url = "https://" + data.url.slice(7);
+  //   }
+
+  //   const customUrlUsed = await urlRepository.findOne({
+  //     where: { shtnd_url: data.customUrl },
+  //   });
+
+  //   if (customUrlUsed) {
+  //     ctx.status = 400;
+  //     ctx.body = { error: "Custom url already exists", err_code: "E1003" };
+  //     return;
+  //   }
+
+  //   const urlExistsInDb = await urlRepository.findOne({
+  //     where: { shtnd_url: data.customUrl, user_id: userId },
+  //   });
+
+  //   if (urlExistsInDb) {
+  //     ctx.status = 200;
+  //     ctx.body = {
+  //       url: urlExistsInDb.url,
+  //       shtnd_url: urlExistsInDb.shtnd_url,
+  //       times_visited: urlExistsInDb.times_visited,
+  //       created_at: urlExistsInDb.created_at,
+  //     };
+  //     return;
+  //   }
+
+  //   const newUrl = new Link();
+  //   newUrl.url = data.url;
+  //   newUrl.shtnd_url = data.customUrl;
+  //   newUrl.times_visited = 0;
+  //   newUrl.user_id = userId;
+
+  //   await urlRepository.save(newUrl);
+
+  //   ctx.status = 200;
+  //   ctx.body = {
+  //     url: newUrl.url,
+  //     shtnd_url: newUrl.shtnd_url,
+  //     times_visited: newUrl.times_visited,
+  //     created_at: newUrl.created_at,
+  //     user_id: userId,
+  //   };
+  // }
+
+  public async getCustomUrls(ctx: Context): Promise<void> {
     const userId = await getUserIdFromJwt(ctx);
 
-    // if data.url is empty
-    if (!data.url) {
+    if (!userId) {
       // set the status code to 400 and send back an error message as the response body
       ctx.status = 400;
-      ctx.body = { error: "Url is required", err_code: "E1000" };
+      ctx.body = { error: "User is not valid" };
       return;
     }
 
-    if (!data.customUrl) {
+    try {
+      const shtnd_url = await this.linkService.getCustomUrls(userId);
+      ctx.body = shtnd_url;
+    } catch (err) {
+      if (err.message === errors.SHORTED_URL_ALREADY_EXISTS) {
+        ctx.status = 400;
+        ctx.body = { err_code: errors.NO_SHORTED_URL_FOUND };
+      }
+    }
+
+    return;
+  }
+
+  public async removeUrl(ctx: Context): Promise<void> {
+    const userId = await getUserIdFromJwt(ctx);
+    const data = <RemoveURLDTO>ctx.request.body;
+
+    if (!userId) {
+      // set the status code to 400 and send back an error message as the response body
       ctx.status = 400;
-      ctx.body = { error: "Custom url is required", err_code: "E1001" };
+      ctx.body = { error: "User is not valid" };
       return;
     }
 
-    // url validator
-    if (!validator.isURL(data.url)) {
+    if (!data.shtnd_url) {
+      // set the status code to 400 and send back an error message as the response body
       ctx.status = 400;
-      ctx.body = { error: "Invalid url", err_code: "E1002" };
+      ctx.body = { error: "Shortened url is required" };
       return;
     }
 
-    // converts http:// to https://
-    if (!data.url.startsWith("http://") && !data.url.startsWith("https://")) {
-      data.url = "https://" + data.url;
-    }
+    try {
+      const shtnd_url = await this.linkService.removeUrl(
+        userId,
+        data.shtnd_url
+      );
 
-    if (data.url.startsWith("http://")) {
-      data.url = "https://" + data.url.slice(7);
-    }
-
-    const customUrlUsed = await urlRepository.findOne({
-      where: { shtnd_url: data.customUrl },
-    });
-
-    if (customUrlUsed) {
-      ctx.status = 400;
-      ctx.body = { error: "Custom url already exists", err_code: "E1003" };
-      return;
-    }
-
-    const urlExistsInDb = await urlRepository.findOne({
-      where: { shtnd_url: data.customUrl, user_id: userId },
-    });
-
-    if (urlExistsInDb) {
       ctx.status = 200;
-      ctx.body = {
-        url: urlExistsInDb.url,
-        shtnd_url: urlExistsInDb.shtnd_url,
-        times_visited: urlExistsInDb.times_visited,
-        created_at: urlExistsInDb.created_at,
-      };
-      return;
+      ctx.body = shtnd_url;
+    } catch (err) {
+      ctx.status = 400;
+      ctx.body = { err_code: errors.NO_SHORTED_URL_FOUND };
     }
 
-    const newUrl = new Link();
-    newUrl.url = data.url;
-    newUrl.shtnd_url = data.customUrl;
-    newUrl.times_visited = 0;
-    newUrl.user_id = userId;
-
-    await urlRepository.save(newUrl);
-
-    ctx.status = 200;
-    ctx.body = {
-      url: newUrl.url,
-      shtnd_url: newUrl.shtnd_url,
-      times_visited: newUrl.times_visited,
-      created_at: newUrl.created_at,
-      user_id: userId,
-    };
+    return;
   }
 }
 export default new LinkController();

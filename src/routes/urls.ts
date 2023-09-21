@@ -8,6 +8,17 @@ const UrlRouter = new Router();
 
 UrlRouter.post("/full", async (ctx) => await LinkController.getFullUrl(ctx));
 UrlRouter.post("/", async (ctx) => await LinkController.createShortUrl(ctx));
+UrlRouter.post(
+  "/getCustomUrls",
+  verifyTokenMiddleware,
+  async (ctx) => await LinkController.getCustomUrls(ctx)
+);
+
+UrlRouter.post(
+  "/removeUrl",
+  verifyTokenMiddleware,
+  async (ctx) => await LinkController.removeUrl(ctx)
+);
 
 // router.get("routeName", "middleware", "controller");
 UrlRouter.post("/auth/signup", async (ctx) => await AuthController.signup(ctx));

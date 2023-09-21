@@ -7,3 +7,11 @@ export interface ShtndLinkResponse {
   error?: string;
   err_code?: string;
 }
+
+export interface CustomLinkResponse {
+  url: string;
+  shtnd_url: string;
+  times_visited: number;
+  created_at: Date;
+  user_id: string;
+}

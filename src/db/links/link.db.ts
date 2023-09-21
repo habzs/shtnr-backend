@@ -1,4 +1,4 @@
-import { EntityManager } from "typeorm";
+import { DeleteResult, EntityManager } from "typeorm";
 import AppDataSource from "../../../config/db_config";
 import { Link } from "../../entities/links";
 
@@ -27,6 +27,15 @@ export interface ILinkDb {
     user_id: string,
     entityManager?: EntityManager
   ) => Promise<Link>;
+  getCustomUrls: (
+    userId: string,
+    entityManager?: EntityManager
+  ) => Promise<Link[]>;
+  removeUrl: (
+    userId: string,
+    shtnd_url: string,
+    entityManager?: EntityManager
+  ) => Promise<DeleteResult>;
 }
 
 export class LinkDb implements ILinkDb {
@@ -91,5 +100,29 @@ export class LinkDb implements ILinkDb {
     await entityManager.getRepository(Link).save(newUrl);
 
     return newUrl;
+  }
+
+  public async getCustomUrls(
+    userId: string,
+    entityManager: EntityManager = AppDataSource.manager
+  ) {
+    const url = await entityManager.getRepository(Link).find({
+      where: { user_id: userId },
+    });
+
+    return url;
+  }
+
+  public async removeUrl(
+    userId: string,
+    shtnd_url: string,
+    entityManager: EntityManager = AppDataSource.manager
+  ) {
+    const res = await entityManager.getRepository(Link).delete({
+      user_id: userId,
+      shtnd_url: shtnd_url,
+    });
+
+    return res;
   }
 }
