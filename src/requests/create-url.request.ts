@@ -4,4 +4,6 @@ export class CreateUrlDto {
   //   @IsDefined()
   //   @IsString()
   url: string;
+
+  customUrl: string;
 }

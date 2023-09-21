@@ -8,10 +8,6 @@ const UrlRouter = new Router();
 
 UrlRouter.post("/full", async (ctx) => await LinkController.getFullUrl(ctx));
 UrlRouter.post("/", async (ctx) => await LinkController.createShortUrl(ctx));
-UrlRouter.post(
-  "/custom",
-  async (ctx) => await LinkController.createCustomUrl(ctx)
-);
 
 // router.get("routeName", "middleware", "controller");
 UrlRouter.post("/auth/signup", async (ctx) => await AuthController.signup(ctx));

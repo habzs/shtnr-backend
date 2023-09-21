@@ -18,7 +18,7 @@ export async function getUserIdFromJwt(ctx: Context) {
     const decoded = await verifyToken(authToken);
     return decoded.id;
   } catch (err) {
-    throw new Error("Invalid token");
+    return;
   }
 }
 
