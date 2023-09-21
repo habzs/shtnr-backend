@@ -24,7 +24,8 @@ app.use(bodyParser());
 // app.use(cors());
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: "https://shtnr.owenlee.net",
+    // origin: "http://localhost:3000",
     credentials: true,
   })
 );
