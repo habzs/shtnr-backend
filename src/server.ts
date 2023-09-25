@@ -31,6 +31,12 @@ app.use(
   })
 );
 
+app.use(async (ctx, next) => {
+  ctx.set("Access-Control-Allow-Origin", "https://shtnr.owenlee.net");
+  ctx.set("Access-Control-Allow-Credentials", "true");
+  await next();
+});
+
 // mock database
 // let users = [
 //   {
