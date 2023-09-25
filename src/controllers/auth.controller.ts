@@ -104,7 +104,6 @@ class AuthController {
         ctx.cookies.set("auth", token, {
           httpOnly: true,
           maxAge: maxAge * 1000,
-          path: ".shtnr.owenlee.net",
         });
         ctx.status = 200;
         ctx.body = { msg: "logged in", user: user };
