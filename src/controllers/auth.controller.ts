@@ -104,6 +104,8 @@ class AuthController {
         ctx.cookies.set("auth", token, {
           httpOnly: true,
           maxAge: maxAge * 1000,
+          sameSite: "lax",
+          secure: true,
         });
         ctx.status = 200;
         ctx.body = { msg: "logged in", user: user };
