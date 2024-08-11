@@ -13,8 +13,8 @@ const AppDataSource = new DataSource({
   migrations: ["./migration/*"],
   synchronize: false,
   logging: true,
-  ssl: true,
-
+  ssl: false,
+  // ssl: true,
   // url: process.env.DATABASE_URL,
 
   // type: "postgres",
@@ -27,5 +27,6 @@ const AppDataSource = new DataSource({
   // synchronize: true,
   // logging: true,
 });
+console.log("DATABASE_URL: ", process.env.DATABASE_URL);
 
 export default AppDataSource;

@@ -24,15 +24,15 @@ app.use(bodyParser());
 // app.use(cors());
 app.use(
   cors({
-    origin: "https://shtnr.owenlee.net",
     // origin: "https://shtnr.owenlee.net",
-    // origin: "http://localhost:3000",
+    // origin: "https://shtnr.owenlee.net",
+    origin: "http://localhost:3000",
     credentials: true,
   })
 );
 
 app.use(async (ctx, next) => {
-  ctx.set("Access-Control-Allow-Origin", "https://shtnr.owenlee.net");
+  // ctx.set("Access-Control-Allow-Origin", "https://shtnr.owenlee.net");
   ctx.set("Access-Control-Allow-Credentials", "true");
   await next();
 });
